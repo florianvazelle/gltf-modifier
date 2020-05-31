@@ -7,12 +7,17 @@ import {
   Raycaster,
   MeshNormalMaterial,
   PerspectiveCamera,
+  BoxBufferGeometry,
   ConeBufferGeometry,
   WebGLRenderer
 } from "three";
 import Stats from "stats.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+import { GUI } from 'dat.gui';
+
+import { exportGLTF } from './utils';
 
 import damagedHelmet from "./assets/models/DamagedHelmet/DamagedHelmet.gltf";
 
@@ -66,7 +71,32 @@ class GLTFModifier extends Component {
     this.renderer.render(this.scene, this.camera);
     this.renderer.setAnimationLoop(this.animate);
 
-    this.helper = new Mesh(new ConeBufferGeometry(0.025, 0.1, 32), new MeshNormalMaterial());
+    var assetsGeometry = {
+      'box': new BoxBufferGeometry(0.1, 0.1, 0.1),
+      'cone': new ConeBufferGeometry(0.025, 0.1, 32)
+    }
+
+    this.config = {
+      speed: 1,
+      asset: 'cone',
+      import: () => {
+        
+      },
+      export: () => {
+        exportGLTF(this.scene);
+      }
+    };
+
+    this.gui = new GUI();
+    this.gui.add(this.config, 'speed', -5, 5);
+    var controller = this.gui.add(this.config, 'asset', Object.keys(assetsGeometry));
+    controller.onChange((value) => {
+      this.helper.geometry = assetsGeometry[value];
+    });
+    this.gui.add(this.config, 'import');
+    this.gui.add(this.config, 'export');
+
+    this.helper = new Mesh(assetsGeometry[this.config.asset], new MeshNormalMaterial());
     this.scene.add(this.helper);
   };
 
@@ -74,7 +104,7 @@ class GLTFModifier extends Component {
     this.stats.begin();
 
     if (this.object) {
-      this.object.rotation.y += 0.001;
+      this.object.rotation.y += this.config.speed / 100;
     }
 
     this.controls.update();
@@ -101,15 +131,17 @@ class GLTFModifier extends Component {
     this.mouse.y = -(event.clientY / this.renderer.domElement.clientHeight) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.camera);
 
-    // See if the ray from the camera into the world hits one of our meshes
-    const intersects = this.raycaster.intersectObjects(this.object.children, true);
+    if (this.object) {
+      // See if the ray from the camera into the world hits one of our meshes
+      const intersects = this.raycaster.intersectObjects(this.object.children, true);
 
-    // Toggle rotation bool for meshes that we clicked
-    if (intersects.length > 0) {
+      // Toggle rotation bool for meshes that we clicked
+      if (intersects.length > 0) {
         this.helper.position.set(0, 0, 0);
         this.helper.lookAt(intersects[0].face.normal);
 
         this.helper.position.copy(intersects[0].point);
+      }
     }
   };
 

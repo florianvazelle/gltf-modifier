@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@emotion/core": "^10.0.28",
+    "dat.gui": "^0.7.7",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "stats.js": "0.17.0",
