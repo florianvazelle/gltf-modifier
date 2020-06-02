@@ -61,6 +61,7 @@ class GLTFModifier extends Component {
 
     this.node.appendChild(this.renderer.domElement);
     window.addEventListener("resize", this.onWindowResize);
+    window.addEventListener("mousedown", this.onMouseClick);
     window.addEventListener("mousemove", this.onMouseMove);
 
     this.stats = new Stats();
@@ -71,13 +72,12 @@ class GLTFModifier extends Component {
     this.renderer.render(this.scene, this.camera);
     this.renderer.setAnimationLoop(this.animate);
 
-    var assetsGeometry = {
+    this.assetsGeometry = {
       'box': new BoxBufferGeometry(0.1, 0.1, 0.1),
       'cone': new ConeBufferGeometry(0.025, 0.1, 32)
     }
 
     this.config = {
-      speed: 1,
       asset: 'cone',
       import: () => {
         
@@ -88,24 +88,19 @@ class GLTFModifier extends Component {
     };
 
     this.gui = new GUI();
-    this.gui.add(this.config, 'speed', -5, 5);
-    var controller = this.gui.add(this.config, 'asset', Object.keys(assetsGeometry));
+    var controller = this.gui.add(this.config, 'asset', Object.keys(this.assetsGeometry));
     controller.onChange((value) => {
-      this.helper.geometry = assetsGeometry[value];
+      this.helper.geometry = this.assetsGeometry[value];
     });
     this.gui.add(this.config, 'import');
     this.gui.add(this.config, 'export');
 
-    this.helper = new Mesh(assetsGeometry[this.config.asset], new MeshNormalMaterial());
+    this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshNormalMaterial());
     this.scene.add(this.helper);
   };
 
   animate = () => {
     this.stats.begin();
-
-    if (this.object) {
-      this.object.rotation.y += this.config.speed / 100;
-    }
 
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
@@ -115,6 +110,7 @@ class GLTFModifier extends Component {
 
   cleanup = () => {
     window.removeEventListener("resize", this.onWindowResize);
+    window.removeEventListener("mousedown", this.onMouseClick);
     window.removeEventListener("mousemove", this.onMouseMove);
     this.renderer.setAnimationLoop(null);
   };
@@ -124,6 +120,14 @@ class GLTFModifier extends Component {
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(this.node.clientWidth, this.node.clientHeight);
+  };
+
+  onMouseClick = () => {
+    console.log(event.which)
+    if (event.which == 3) {
+      this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshNormalMaterial());
+      this.scene.add(this.helper);
+    }
   };
 
   onMouseMove = (event) => {
