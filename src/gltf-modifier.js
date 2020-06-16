@@ -80,7 +80,7 @@ class GLTFModifier extends Component {
     this.config = {
       asset: 'cone',
       import: () => {
-        
+        this.inputElement.click()
       },
       export: () => {
         exportGLTF(this.scene);
@@ -149,12 +149,41 @@ class GLTFModifier extends Component {
     }
   };
 
+  importGLTF = (ev) => {
+    ev.preventDefault();
+    let reader = new FileReader();
+    let file = ev.target.files[0];
+    reader.onloadend = () => {
+      this.gltfLoader.parse(reader.result, undefined, ({ scene }) => {
+        this.object = scene;
+        this.object.traverse(node => {
+          if (node.isMesh) {
+            node.material = new MeshNormalMaterial();
+            node.material.needsUpdate = true;
+          }
+        });
+
+        this.scene.add(this.object);
+      });
+    };
+    reader.readAsText(file);
+  };
+
   render() {
     return (
       <div
-        style={{ width: "100%", height: "100%" }}
-        ref={el => (this.node = el)}
-      />
+        style={{ width: "100%", height: "100%" }}>
+        <input
+          type="file"
+          style={{ display: "none" }}
+          ref={input => this.inputElement = input}
+          onChange={importGLTF}
+        />
+        <div
+          style={{ width: "100%", height: "100%" }}
+          ref={el => (this.node = el)}
+        />
+      </div>
     );
   }
 }
