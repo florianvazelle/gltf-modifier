@@ -6,6 +6,7 @@ import {
   Vector2,
   Raycaster,
   MeshNormalMaterial,
+  MeshBasicMaterial,
   PerspectiveCamera,
   BoxBufferGeometry,
   ConeBufferGeometry,
@@ -43,17 +44,7 @@ class GLTFModifier extends Component {
     this.mouse = new Vector2();
 
     this.gltfLoader = new GLTFLoader();
-    this.gltfLoader.parse(damagedHelmet, undefined, ({ scene }) => {
-      this.object = scene;
-      this.object.traverse(node => {
-        if (node.isMesh) {
-          node.material = new MeshNormalMaterial();
-          node.material.needsUpdate = true;
-        }
-      });
-
-      this.scene.add(this.object);
-    });
+    this.gltfLoader.parse(damagedHelmet, undefined, this.parseCallback);
 
     this.renderer = new WebGLRenderer({
       antialias: true
@@ -95,7 +86,7 @@ class GLTFModifier extends Component {
     this.gui.add(this.config, 'import');
     this.gui.add(this.config, 'export');
 
-    this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshNormalMaterial());
+    this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshBasicMaterial({ color: 0xff0000 }));
     this.scene.add(this.helper);
   };
 
@@ -125,7 +116,7 @@ class GLTFModifier extends Component {
   onMouseClick = () => {
     console.log(event.which)
     if (event.which == 3) {
-      this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshNormalMaterial());
+      this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshBasicMaterial({ color: 0xff0000 }));
       this.scene.add(this.helper);
     }
   };
@@ -149,22 +140,24 @@ class GLTFModifier extends Component {
     }
   };
 
+  parseCallback = ({ scene }) => {
+    this.object = scene;
+    // this.object.traverse(node => {
+    //   if (node.isMesh) {
+    //     node.material = new MeshBasicMaterial({ color: 0xffff00 });
+    //     node.material.needsUpdate = true;
+    //   }
+    // });
+
+    this.scene.add(this.object);
+  };
+
   importGLTF = (ev) => {
     ev.preventDefault();
     let reader = new FileReader();
     let file = ev.target.files[0];
     reader.onloadend = () => {
-      this.gltfLoader.parse(reader.result, undefined, ({ scene }) => {
-        this.object = scene;
-        this.object.traverse(node => {
-          if (node.isMesh) {
-            node.material = new MeshNormalMaterial();
-            node.material.needsUpdate = true;
-          }
-        });
-
-        this.scene.add(this.object);
-      });
+      this.gltfLoader.parse(reader.result, undefined, this.parseCallback);
     };
     reader.readAsText(file);
   };
@@ -177,7 +170,7 @@ class GLTFModifier extends Component {
           type="file"
           style={{ display: "none" }}
           ref={input => this.inputElement = input}
-          onChange={importGLTF}
+          onChange={this.importGLTF}
         />
         <div
           style={{ width: "100%", height: "100%" }}
