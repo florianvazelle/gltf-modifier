@@ -6,28 +6,31 @@ import {
   Vector2,
   Vector3,
   Raycaster,
-  LightProbe,
   sRGBEncoding,
-  DirectionalLight,
-  CubeTextureLoader,
+  WebGLRenderer,
+  PMREMGenerator,
+  UnsignedByteType,
   MeshBasicMaterial,
   PerspectiveCamera,
   BoxBufferGeometry,
-  NoToneMapping,
   ConeBufferGeometry,
-  WebGLRenderer,
+  ACESFilmicToneMapping,
 } from "three";
 import Stats from "stats.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { LightProbeGenerator } from 'three/examples/jsm/lights/LightProbeGenerator.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 import { GUI } from 'dat.gui';
 
 import { exportGLTF } from './utils';
 
-import Cube from "./assets/models/Plan/Plan.gltf";
-import baseBuilding from "./assets/models/base/baseBuilding.gltf";
+import Plan from "./assets/models/Plan/Plan.gltf";
+import base from "./assets/models/building/base.gltf";
+import corner from "./assets/models/building/corner.gltf";
+import building1 from "./assets/models/building/complete1.gltf";
+import building2 from "./assets/models/building/complete2.gltf";
+import building3 from "./assets/models/building/complete3.gltf";
 
 // linear color space
 var API = {
@@ -46,7 +49,6 @@ class GLTFModifier extends Component {
   }
 
   init = () => {
-    
     // camera
     this.aspect = this.node.clientWidth / this.node.clientHeight;
     this.camera = new PerspectiveCamera(50, this.aspect, 1, 1000);
@@ -57,40 +59,26 @@ class GLTFModifier extends Component {
 
     // scene
     this.scene = new Scene();
-    // this.scene.background = new Color("#191919");
-
-    // probe
-    this.lightProbe = new LightProbe();
-    this.scene.add(this.lightProbe);
-
-		// light
-    this.light = new DirectionalLight(0xffffff, API.directionalLightIntensity);
-    this.light.position.set(10, 10, 10);
-    this.scene.add(this.light);
 
     // envmap
-    var genCubeUrls = function (prefix, postfix) {
-      return [
-        prefix + 'px' + postfix, prefix + 'nx' + postfix,
-        prefix + 'py' + postfix, prefix + 'ny' + postfix,
-        prefix + 'pz' + postfix, prefix + 'nz' + postfix
-      ];
-    };
+    new RGBELoader()
+      .setDataType(UnsignedByteType)
+      .setPath('textures/')
+      .load('royal_esplanade_1k.hdr', (texture) => {
 
-    var urls = genCubeUrls('pisa/', '.png');
+        this.envMap = pmremGenerator.fromEquirectangular(texture).texture;
 
-    new CubeTextureLoader().load(urls, (cubeTexture) => {
-      cubeTexture.encoding = sRGBEncoding;
-      this.scene.background = cubeTexture;
-      this.cubeTexture = cubeTexture;
-      this.lightProbe.copy(LightProbeGenerator.fromCubeTexture(cubeTexture));
-    });
+        this.setEnvMap();
+
+        texture.dispose();
+        pmremGenerator.dispose();
+      });
 
     this.raycaster = new Raycaster();
     this.mouse = new Vector2();
 
     this.gltfLoader = new GLTFLoader();
-    this.gltfLoader.parse(Cube, undefined, this.onLoad, this.onError);
+    this.gltfLoader.parse(Plan, undefined, this.onLoad, this.onError);
 
     this.renderer = new WebGLRenderer({
       antialias: true
@@ -110,9 +98,12 @@ class GLTFModifier extends Component {
     this.renderer.render(this.scene, this.camera);
     this.renderer.setAnimationLoop(this.animate);
 
-    // tone mapping
-    this.renderer.toneMapping = NoToneMapping;
+    this.renderer.toneMapping = ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1;
     this.renderer.outputEncoding = sRGBEncoding;
+
+    var pmremGenerator = new PMREMGenerator(this.renderer);
+    pmremGenerator.compileEquirectangularShader();
 
     const center = new Vector3();
 
@@ -131,17 +122,16 @@ class GLTFModifier extends Component {
     this.assets = {
       'cone': cone,
       'box': box,
-      'base': null
+      'base': null,
+      'corner': null,
+    //   'building 1': null,
+    //   'building 2': null,
+    //   'building 3': null
     }
-    this.gltfLoader.parse(baseBuilding, undefined, ({ scene }) => {
-      scene.traverse((node) => {
-        if (node.isMesh) {
-          node.geometry.translate(0, node.geometry.boundingBox.getSize(center).y / 2, 0);
-          node.geometry.rotateX(Math.PI / 2);
-        }
-      });
-      this.assets['base'] = scene;
-    }, this.onError);
+
+    this.gltfLoader.parse(base, undefined, (gltf) => this.onLoadAsset(gltf, "base"), this.onError);
+    this.gltfLoader.parse(corner, undefined, (gltf) => this.onLoadAsset(gltf, "corner"), this.onError);
+    // this.gltfLoader.parse(building1, undefined, (gltf) => this.onLoadAsset(gltf, "building 1"), this.onError);
 
     this.config = {
       asset: 'cone',
@@ -172,21 +162,11 @@ class GLTFModifier extends Component {
 
     fl.add(API, "lightProbeIntensity", 0, 1, 0.02)
       .name("light probe")
-      .onChange(() => {
-        this.lightProbe.intensity = API.lightProbeIntensity;
-      });
+      .onChange(() => { this.lightProbe.intensity = API.lightProbeIntensity; });
 
     fl.add(API, "directionalLightIntensity", 0, 1, 0.02)
       .name("directional light")
-      .onChange(() => {
-        this.light.intensity = API.directionalLightIntensity;
-      });
-
-    fl.add(API, "envMapIntensity", 0, 1, 0.02)
-      .name("envMap")
-      .onChange(() => {
-        this.object.material.envMapIntensity = API.envMapIntensity;
-      });
+      .onChange(() => { this.light.intensity = API.directionalLightIntensity; });
   };
 
   animate = () => {
@@ -243,16 +223,25 @@ class GLTFModifier extends Component {
     this.object = scene;
     this.object.traverse(node => {
       if (node.isMesh) {
-        node.material.envMap = this.cubeTexture;
+        node.material.envMap = this.envMap;
         node.material.envMapIntensity = API.envMapIntensity;
         node.material.needsUpdate = true;
-
-        // var vertexNormalsHelper = new VertexNormalsHelper(node, 2, 0x00ff00, 1);
-        // node.add(vertexNormalsHelper);
       }
     });
     
     this.scene.add(this.object);
+  };
+
+  onLoadAsset = (gltf, idx) => {
+    var scene = gltf.scene;
+    scene.traverse((node) => {
+      if (node.isMesh) {
+        const center = new Vector3();
+        node.geometry.translate(0, node.geometry.boundingBox.getSize(center).y / 2, 0);
+        node.geometry.rotateX(Math.PI / 2);
+      }
+    });
+    this.assets[idx] = scene;
   };
 
   onProgress = () => { };
@@ -266,7 +255,7 @@ class GLTFModifier extends Component {
       reader.onloadend = () => {
         this.gltfLoader.parse(reader.result, undefined, (gltf) => {
           this.scene = new Scene();
-          this.scene.background = this.cubeTexture;
+          this.setEnvMap();
           this.onLoad(gltf);
           this.scene.add(this.light);
           this.scene.add(this.helper);
@@ -274,6 +263,11 @@ class GLTFModifier extends Component {
       };
       reader.readAsText(file);
     }
+  };
+
+  setEnvMap = () => {
+    this.scene.background = this.envMap;
+    this.scene.environment = this.envMap;
   };
 
   render() {
