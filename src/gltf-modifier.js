@@ -44,7 +44,7 @@ class GLTFModifier extends Component {
     this.mouse = new Vector2();
 
     this.gltfLoader = new GLTFLoader();
-    this.gltfLoader.parse(damagedHelmet, undefined, this.parseCallback);
+    this.gltfLoader.parse(damagedHelmet, undefined, this.onLoad, this.onError);
 
     this.renderer = new WebGLRenderer({
       antialias: true
@@ -74,7 +74,9 @@ class GLTFModifier extends Component {
         this.inputElement.click()
       },
       export: () => {
+        this.scene.remove(this.helper)
         exportGLTF(this.scene);
+        this.scene.add(this.helper)
       }
     };
 
@@ -114,7 +116,6 @@ class GLTFModifier extends Component {
   };
 
   onMouseClick = () => {
-    console.log(event.which)
     if (event.which == 3) {
       this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshBasicMaterial({ color: 0xff0000 }));
       this.scene.add(this.helper);
@@ -140,7 +141,7 @@ class GLTFModifier extends Component {
     }
   };
 
-  parseCallback = ({ scene }) => {
+  onLoad = ({ scene }) => {
     this.object = scene;
     // this.object.traverse(node => {
     //   if (node.isMesh) {
@@ -152,12 +153,20 @@ class GLTFModifier extends Component {
     this.scene.add(this.object);
   };
 
+  onProgress = () => { };
+  onError = (errorMessage) => { console.log(errorMessage) };
+
   importGLTF = (ev) => {
     ev.preventDefault();
     let reader = new FileReader();
     let file = ev.target.files[0];
     reader.onloadend = () => {
-      this.gltfLoader.parse(reader.result, undefined, this.parseCallback);
+      this.gltfLoader.parse(reader.result, undefined, (gltf) => {
+        this.scene = new Scene();
+        this.scene.background = new Color("#191919");
+        this.onLoad(gltf);
+        this.scene.add(this.helper);
+      }, this.onError);
     };
     reader.readAsText(file);
   };
