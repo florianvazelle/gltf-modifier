@@ -1,4 +1,5 @@
-var HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   mode: process.env.NODE_ENV || "development",
@@ -17,24 +18,31 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        loader: 'babel-loader',
+        loader: "babel-loader",
       },
       {
         test: /\.gltf$/,
-        loader: '@vxna/gltf-loader',
-        options: { inline: true }
+        loader: "@vxna/gltf-loader",
+        options: { inline: true },
       },
       {
         test: /\.(bin|jpe?g|png|hdr)$/,
-        loader: 'file-loader',
-        options: { esModule: false }
-      }
+        loader: "file-loader?name=/public/icons/[name].[ext]",
+        options: {
+          esModule: false,
+        },
+      },
     ],
   },
   plugins: [
     new HtmlWebpackPlugin({
       title: "Output Management",
       template: "./index.html",
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: "src/assets/textures/pisa/*.png", to: "pisa/", flatten: true },
+      ],
     }),
   ],
 };
