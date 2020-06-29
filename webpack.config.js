@@ -42,6 +42,7 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         { from: "src/assets/textures/pisa/*.png", to: "pisa/", flatten: true },
+        { from: "src/assets/models/glb/*.glb", to: "glb/", flatten: true },
       ],
     }),
   ],

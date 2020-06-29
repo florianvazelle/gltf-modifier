@@ -27,7 +27,6 @@ import { GUI } from 'dat.gui';
 import { exportGLTF } from './utils';
 
 import damagedHelmet from "./assets/models/DamagedHelmet/DamagedHelmet.gltf";
-import nx from "./assets/textures/pisa/nx.png";
 
 // linear color space
 var API = {
@@ -114,9 +113,12 @@ class GLTFModifier extends Component {
     this.renderer.toneMapping = NoToneMapping;
     this.renderer.outputEncoding = sRGBEncoding;
 
+    this.gltfLoader.load('glb/baseBuilding.glb', (glb) => { this.assetsGeometry['base'] = glb.scene; }, () => { }, this.onError);
+
     this.assetsGeometry = {
       'box': new BoxBufferGeometry(0.1, 0.1, 0.1),
-      'cone': new ConeBufferGeometry(0.025, 0.1, 32)
+      'cone': new ConeBufferGeometry(0.025, 0.1, 32),
+      'base': null
     }
 
     this.config = {
@@ -133,13 +135,11 @@ class GLTFModifier extends Component {
 
     this.gui = new GUI();
     var controller = this.gui.add(this.config, 'asset', Object.keys(this.assetsGeometry));
-    controller.onChange((value) => {
-      this.helper.geometry = this.assetsGeometry[value];
-    });
+    controller.onChange(this.changeHelper);
     this.gui.add(this.config, 'import');
     this.gui.add(this.config, 'export');
 
-    this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshBasicMaterial({ color: 0xff0000 }));
+    this.changeHelper();
     this.scene.add(this.helper);
 
     var fl = this.gui.addFolder("Intensity");
@@ -188,9 +188,20 @@ class GLTFModifier extends Component {
 
   onMouseClick = () => {
     if (event.which == 3) {
-      this.helper = new Mesh(this.assetsGeometry[this.config.asset], new MeshBasicMaterial({ color: 0xff0000 }));
+      this.changeHelper();
       this.scene.add(this.helper);
     }
+  };
+
+  changeHelper = () => {
+    if (this.config.asset == "cone" || this.config.asset == 'box')
+      this.helper = new Mesh(
+        this.assetsGeometry[this.config.asset],
+        new MeshBasicMaterial({ color: 0xff0000 })
+      );
+    else 
+      this.helper = this.assetsGeometry[this.config.asset].clone(true);
+    console.log(this.helper)
   };
 
   onMouseMove = (event) => {
