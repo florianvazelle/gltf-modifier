@@ -2,8 +2,9 @@ import React, { Component } from "react";
 import {
   Mesh,
   Scene,
-  Color,
+  Box3,
   Vector2,
+  Vector3,
   Raycaster,
   LightProbe,
   sRGBEncoding,
@@ -20,13 +21,13 @@ import Stats from "stats.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { LightProbeGenerator } from 'three/examples/jsm/lights/LightProbeGenerator.js';
-import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper.js';
 
 import { GUI } from 'dat.gui';
 
 import { exportGLTF } from './utils';
 
-import damagedHelmet from "./assets/models/DamagedHelmet/DamagedHelmet.gltf";
+import Cube from "./assets/models/Plan/Plan.gltf";
+import baseBuilding from "./assets/models/base/baseBuilding.gltf";
 
 // linear color space
 var API = {
@@ -49,7 +50,7 @@ class GLTFModifier extends Component {
     // camera
     this.aspect = this.node.clientWidth / this.node.clientHeight;
     this.camera = new PerspectiveCamera(50, this.aspect, 1, 1000);
-    this.camera.position.set(0, 0.9, 3.7);
+    this.camera.position.set(-15, 30, 45);
 
     // controls
     this.controls = new OrbitControls(this.camera, this.node);
@@ -89,7 +90,7 @@ class GLTFModifier extends Component {
     this.mouse = new Vector2();
 
     this.gltfLoader = new GLTFLoader();
-    this.gltfLoader.parse(damagedHelmet, undefined, this.onLoad, this.onError);
+    this.gltfLoader.parse(Cube, undefined, this.onLoad, this.onError);
 
     this.renderer = new WebGLRenderer({
       antialias: true
@@ -113,13 +114,34 @@ class GLTFModifier extends Component {
     this.renderer.toneMapping = NoToneMapping;
     this.renderer.outputEncoding = sRGBEncoding;
 
-    this.gltfLoader.load('glb/baseBuilding.glb', (glb) => { this.assetsGeometry['base'] = glb.scene; }, () => { }, this.onError);
+    const center = new Vector3();
 
-    this.assetsGeometry = {
-      'box': new BoxBufferGeometry(0.1, 0.1, 0.1),
-      'cone': new ConeBufferGeometry(0.025, 0.1, 32),
+    var boxGeometry = new BoxBufferGeometry(1, 1, 1);
+    var box = new Mesh(boxGeometry, new MeshBasicMaterial({ color: 0xff0000 }));
+    var boundingBox = new Box3().setFromObject(box);
+    box.geometry.translate(0, boundingBox.getSize(center).y / 2, 0);
+    box.geometry.rotateX(Math.PI / 2);
+    
+    var coneGeometry = new ConeBufferGeometry(1, 5, 32);
+    var cone = new Mesh(coneGeometry, new MeshBasicMaterial({ color: 0xff0000 }));
+    boundingBox = new Box3().setFromObject(cone);
+    cone.geometry.translate(0, boundingBox.getSize(center).y / 2, 0);
+    cone.geometry.rotateX(Math.PI / 2);
+
+    this.assets = {
+      'cone': cone,
+      'box': box,
       'base': null
     }
+    this.gltfLoader.parse(baseBuilding, undefined, ({ scene }) => {
+      scene.traverse((node) => {
+        if (node.isMesh) {
+          node.geometry.translate(0, node.geometry.boundingBox.getSize(center).y / 2, 0);
+          node.geometry.rotateX(Math.PI / 2);
+        }
+      });
+      this.assets['base'] = scene;
+    }, this.onError);
 
     this.config = {
       asset: 'cone',
@@ -134,8 +156,12 @@ class GLTFModifier extends Component {
     };
 
     this.gui = new GUI();
-    var controller = this.gui.add(this.config, 'asset', Object.keys(this.assetsGeometry));
-    controller.onChange(this.changeHelper);
+    var controller = this.gui.add(this.config, 'asset', Object.keys(this.assets));
+    controller.onChange(() => {
+      this.scene.remove(this.helper);
+      this.changeHelper()
+      this.scene.add(this.helper);
+    });
     this.gui.add(this.config, 'import');
     this.gui.add(this.config, 'export');
 
@@ -164,12 +190,9 @@ class GLTFModifier extends Component {
   };
 
   animate = () => {
-    this.stats.begin();
-
+    this.stats.update();
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
-
-    this.stats.end();
   };
 
   cleanup = () => {
@@ -194,14 +217,7 @@ class GLTFModifier extends Component {
   };
 
   changeHelper = () => {
-    if (this.config.asset == "cone" || this.config.asset == 'box')
-      this.helper = new Mesh(
-        this.assetsGeometry[this.config.asset],
-        new MeshBasicMaterial({ color: 0xff0000 })
-      );
-    else 
-      this.helper = this.assetsGeometry[this.config.asset].clone(true);
-    console.log(this.helper)
+    this.helper = this.assets[this.config.asset].clone(true);
   };
 
   onMouseMove = (event) => {
@@ -227,14 +243,15 @@ class GLTFModifier extends Component {
     this.object = scene;
     this.object.traverse(node => {
       if (node.isMesh) {
-        node.material.envMap = this.cubeTexture,
-						node.material.envMapIntensity = API.envMapIntensity,
+        node.material.envMap = this.cubeTexture;
+        node.material.envMapIntensity = API.envMapIntensity;
         node.material.needsUpdate = true;
+
+        // var vertexNormalsHelper = new VertexNormalsHelper(node, 2, 0x00ff00, 1);
+        // node.add(vertexNormalsHelper);
       }
     });
-      // var vertexNormalsHelper = new VertexNormalsHelper(this.object, 10);
-      // this.object.add(vertexNormalsHelper);
-
+    
     this.scene.add(this.object);
   };
 
