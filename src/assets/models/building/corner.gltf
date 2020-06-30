@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v1.2.75",
+        "generator" : "Khronos glTF Blender I/O v1.1.46",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -16,9 +16,15 @@
         {
             "mesh" : 0,
             "name" : "CornerBuilding",
+            "rotation" : [
+                0.7071068286895752,
+                0,
+                0,
+                0.7071067094802856
+            ],
             "translation" : [
                 0,
-                1,
+                1.0000001192092896,
                 0
             ]
         }
@@ -31,7 +37,7 @@
                 0,
                 0
             ],
-            "name" : "BaseMaterial",
+            "name" : "BaseMaterial.008",
             "pbrMetallicRoughness" : {
                 "baseColorFactor" : [
                     0.4479791224002838,
@@ -50,7 +56,7 @@
                 0,
                 0
             ],
-            "name" : "GlassMaterial",
+            "name" : "GlassMaterial.008",
             "pbrMetallicRoughness" : {
                 "baseColorFactor" : [
                     0.800000011920929,
@@ -65,7 +71,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Cube.001",
+            "name" : "Cube.048",
             "primitives" : [
                 {
                     "attributes" : {
@@ -92,63 +98,63 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 230,
+            "count" : 311,
             "max" : [
                 1.997307538986206,
-                1,
-                1.0668095350265503
+                1.0668095350265503,
+                0.9999999403953552
             ],
             "min" : [
                 -0.4963274598121643,
-                -0.9999999403953552,
-                -1.317751407623291
+                -1.317751407623291,
+                -1
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 230,
+            "count" : 311,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 230,
+            "count" : 311,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 450,
+            "count" : 384,
             "type" : "SCALAR"
         },
         {
             "bufferView" : 4,
             "componentType" : 5126,
-            "count" : 16,
+            "count" : 20,
             "max" : [
                 1.9563838243484497,
-                1,
-                1.0139012336730957
+                1.0139012336730957,
+                0.8225805759429932
             ],
             "min" : [
                 -0.44066113233566284,
-                -0.8225805759429932,
-                -0.21183252334594727
+                -0.21183252334594727,
+                -1
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 5,
             "componentType" : 5126,
-            "count" : 16,
+            "count" : 20,
             "type" : "VEC3"
         },
         {
             "bufferView" : 6,
             "componentType" : 5126,
-            "count" : 16,
+            "count" : 20,
             "type" : "VEC2"
         },
         {
@@ -161,48 +167,48 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 2760,
+            "byteLength" : 3732,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 2760,
-            "byteOffset" : 2760
+            "byteLength" : 3732,
+            "byteOffset" : 3732
         },
         {
             "buffer" : 0,
-            "byteLength" : 1840,
-            "byteOffset" : 5520
+            "byteLength" : 2488,
+            "byteOffset" : 7464
         },
         {
             "buffer" : 0,
-            "byteLength" : 900,
-            "byteOffset" : 7360
+            "byteLength" : 768,
+            "byteOffset" : 9952
         },
         {
             "buffer" : 0,
-            "byteLength" : 192,
-            "byteOffset" : 8260
+            "byteLength" : 240,
+            "byteOffset" : 10720
         },
         {
             "buffer" : 0,
-            "byteLength" : 192,
-            "byteOffset" : 8452
+            "byteLength" : 240,
+            "byteOffset" : 10960
         },
         {
             "buffer" : 0,
-            "byteLength" : 128,
-            "byteOffset" : 8644
+            "byteLength" : 160,
+            "byteOffset" : 11200
         },
         {
             "buffer" : 0,
             "byteLength" : 48,
-            "byteOffset" : 8772
+            "byteOffset" : 11360
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 8820,
+            "byteLength" : 11408,
             "uri" : "corner.bin"
         }
     ]

@@ -191,6 +191,7 @@ class GLTFModifier extends Component {
 
   onMouseClick = () => {
     if (event.which == 3) {
+      this.object.add(this.helper);
       this.changeHelper();
       this.scene.add(this.helper);
     }
@@ -237,8 +238,8 @@ class GLTFModifier extends Component {
     scene.traverse((node) => {
       if (node.isMesh) {
         const center = new Vector3();
-        node.geometry.translate(0, node.geometry.boundingBox.getSize(center).y / 2, 0);
         node.geometry.rotateX(Math.PI / 2);
+        node.geometry.translate(0, node.geometry.boundingBox.getSize(center).y / 2, 0);
       }
     });
     this.assets[idx] = scene;
